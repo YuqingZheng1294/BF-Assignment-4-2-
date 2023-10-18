@@ -1,0 +1,119 @@
+---
+title: "Assignment#4 (2)"
+author: "YUQING ZHENG"
+date: "2023-10-18"
+output: html_document
+---
+
+```{r}
+library(fpp)
+library(fpp2)
+library(TTR)
+
+#import data
+AMZN <- read.csv("AMZN.csv")
+str(AMZN)
+AMZN$Date <- as.Date(AMZN$Date)
+open_ts <- ts(AMZN$Open)
+open_ts
+plot(open_ts)
+open_ts <- ts(AMZN$Open,frequency=12,start=c(2018,01),end=c(2023,09))
+plot(open_ts)
+Acf(open_ts)
+
+#Mean
+mean_forecast <- meanf(open_ts,5)
+plot(mean_forecast)
+#5 is the forecasting period,this model using the average of all past open price data from AMZN data from January 2018 to September 2023, and use this average to predict the value of open price for the next five months.
+
+#Naive
+naive_forecast <- naive(open_ts,5)
+plot(naive_forecast)
+#Naive model's output: Assuming very recent data provides best predictors of the future, this model using 2023 September's data to predict the next five month's open price.
+
+#Random Walk
+rwf_forecast <- rwf(open_ts,5)
+rwf_forecast <- rwf(open_ts,5,drift=TRUE)
+plot(rwf_forecast)
+#Random Walk model's output also using the most recent data which is 2023 September's data to predict next five month's open price.
+
+#Seasonal Naive
+snaive_forecast <- snaive(open_ts,5)
+plot(snaive_forecast)
+#Because the data used is monthly seasonality, the output of this model use the last observation month, September 2023, to predict the next 5 months.
+
+#Moving Averages (Use a constant number of data points to come up with first forecast)
+MA5_forecast <- ma(open_ts,order = 5)
+plot(MA5_forecast)
+MA9_forecast <- ma(open_ts,order = 9)
+plot(MA9_forecast)
+#A moving average of order 5 is the mean of 5 consecutive observations. The most recent moving average values provides a forecast for the next five months. In the output we can see the MA_9 is more smoother compared to the MA_5 line.
+
+attributes(naive_forecast)
+
+#Decomposition
+ets_forecast <- ets(open_ts)
+ets_forecast
+plot(ets_forecast)
+#The first part of this output is the observed data of AMZN's open price. The level of the second part represents the trend of the data, indicating that there is an overall upward trend during this period, and the trend has declined after 2022. The level estimate is then used to forecast future values.
+attributes(ets_forecast)
+ets_forecast$mse
+
+
+#HoltWinters
+HW_forecast <- HoltWinters(open_ts)
+HW_forecast
+plot(HW_forecast)
+#The value of beta in the output is equal to 0, indicating that there is no obvious trend. This model pays more attention to new data points. It can be seen from gamma that it is sensitive to seasonal.
+
+
+#plot all in a single chart
+plot(mean_forecast)
+lines(naive_forecast$mean,col="red")
+lines(rwf_forecast$mean,col="green")
+lines(snaive_forecast$mean,col="black")
+lines(MA5_forecast,col="pink")
+lines(MA9_forecast,col="blue")
+#lines(ets_forecast,col="purple")
+#lines(HW_forecast,col="yellow")
+
+#Forecast
+forecast_mean <- forecast(mean_forecast,h=5)
+plot(forecast_mean)
+
+forecast_naive <- forecast(naive_forecast,h=5)
+plot(forecast_naive)
+
+forecast_rwf <- forecast(rwf_forecast,h=5)
+plot(forecast_rwf)
+
+forecast_snaive <- forecast(snaive_forecast,h=5)
+plot(forecast_snaive)
+
+forecast_MA5 <- forecast(MA5_forecast,h=5)
+plot(forecast_MA5)
+
+forecast_MA9 <- forecast(MA9_forecast,h=5)
+plot(forecast_MA9)
+
+forecast_ets_1 <- forecast.ets(ets_forecast,h=5)
+plot(forecast_ets_1)
+accuracy(forecast_ets_1)
+forecast_ets_2 <- forecast(ets_forecast,h=5)
+plot(forecast_ets_2)
+
+forecast_HW <- forecast(HW_forecast,h=5)
+plot(forecast_HW)
+
+#accuracy
+accuracy(forecast_mean)
+accuracy(forecast_naive)
+accuracy(forecast_rwf)
+accuracy(forecast_snaive)
+accuracy(forecast_MA5)
+accuracy(forecast_MA9)
+accuracy(forecast_ets_2)
+accuracy(forecast_HW)
+#I choose MAE as the accuracy measure, MAE is Mean Absolute Error, the smaller its value, the better, indicating that the model’s prediction is more accurate. Through comparison, the model forecast_MA9's MAE=1.481609, is the smallest of all models. it can be concluded that forecast_MA9 is the best model.
+```
+
